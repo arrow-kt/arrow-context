@@ -17,8 +17,7 @@ import kotlin.contracts.contract
 @RaiseDSL
 public inline fun <Error, A> singleton(
   raise: () -> A,
-  // Extension receiver allows builder inference
-  block: context(Raise<Unit>) Raise<Error>.() -> A,
+  block: context(Raise<Unit>, Raise<Error>) () -> A,
 ): A {
   contract {
     callsInPlace(raise, InvocationKind.AT_MOST_ONCE)
@@ -36,8 +35,8 @@ public inline fun <Error, A> singleton(
  * Read more about running a [Raise] computation in the
  * [Arrow docs](https://arrow-kt.io/learn/typed-errors/working-with-typed-errors/#running-and-inspecting-results).
  *
- * @see NullableRaise.ignoreErrors By default, `nullable` only allows raising `null`.
- * Calling [ignoreErrors][NullableRaise.ignoreErrors] inside `nullable` allows to raise any error, which will be returned to the caller as if `null` was raised.
+ * @see ignoreErrors By default, `nullable` only allows raising `null`.
+ * Calling [ignoreErrors][ignoreErrors] inside `nullable` allows to raise any error, which will be returned to the caller as if `null` was raised.
  */
 public inline fun <A> nullable(block: context(Raise<Unit>, Raise<Nothing?>) () -> A): A? =
   singleton({ null }, block)
@@ -63,7 +62,7 @@ public inline fun <A> result(block: Raise<Throwable>.() -> A): Result<A> =
  * [Arrow docs](https://arrow-kt.io/learn/typed-errors/working-with-typed-errors/#running-and-inspecting-results).
  */
 public inline fun <A> option(block: context(Raise<Unit>, Raise<None>) () -> A): Option<A> =
-  singleton(::none) { block(given<Raise<Unit>>(), given<Raise<None>>()).some() }
+  singleton<None, _>(::none) { block(given<Raise<Unit>>(), given<Raise<None>>()).some() }
 
 /**
  * Runs a computation [block] using [Raise], and return its outcome as [Ior].
@@ -147,7 +146,7 @@ public inline fun <Error, A> iorNel(
  */
 public inline fun impure(block: context(Raise<Unit>) () -> Unit) {
   contract { callsInPlace(block, InvocationKind.AT_MOST_ONCE) }
-  return singleton({ }) { block(given<Raise<Unit>>()) }
+  return singleton<Nothing, _>({ }) { block(given<Raise<Unit>>()) }
 }
 
 context(Raise<Unit>)
@@ -170,6 +169,7 @@ public fun <A> Option<A>.bind(): A {
 
 context(Raise<Unit>)
 @RaiseDSL
+@kotlin.internal.LowPriorityInOverloadResolution
 public fun <A> A?.bind(): A {
   contract { returns() implies (this@bind != null) }
   return this ?: raise()

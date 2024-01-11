@@ -13,7 +13,10 @@ repositories {
 
 dependencies {
   implementation(libs.arrow.core)
-  testImplementation(kotlin("test"))
+  implementation(libs.coroutines.test)
+  testImplementation(libs.kotlin.test)
+  testImplementation(libs.kotest.assertionsCore)
+  testImplementation(libs.kotest.property)
 }
 
 tasks.test { useJUnitPlatform() }
@@ -24,6 +27,7 @@ kotlin {
   compilerOptions {
     languageVersion = KotlinVersion.KOTLIN_2_0
     freeCompilerArgs.add("-Xcontext-receivers")
+    freeCompilerArgs.add("-Xallow-kotlin-package")
     optIn.add("kotlin.contracts.ExperimentalContracts")
   }
 }

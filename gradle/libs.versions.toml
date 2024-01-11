@@ -1,6 +1,6 @@
 [versions]
-kotlin = "1.9.0"
-arrow = "1.2.0"
+kotlin = "2.0.0-Beta2"
+arrow = "2.0.0-SNAPSHOT"
 
 [libraries]
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }

@@ -1,8 +1,10 @@
 @file:Suppress("SUBTYPING_BETWEEN_CONTEXT_RECEIVERS")
-package arrow.context
+package arrow.context.raise
 
+import arrow.context.given
 import arrow.core.raise.Raise
 import arrow.core.raise.RaiseDSL
+import arrow.core.raise.merge
 import arrow.core.raise.withError
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -275,3 +277,16 @@ private fun generateWithError(index: Int): String {
     }
   """.trimIndent()
 }*/
+
+// here temporarily until it's in Arrow
+@RaiseDSL
+public inline fun <Error> attempt(block: Raise<Error>.() -> Nothing): Error {
+  contract {
+    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+  }
+  return merge(block)
+}
+
+context(Raise<Error>)
+@RaiseDSL
+public fun <Error> Error.raise(): Nothing = raise(this)

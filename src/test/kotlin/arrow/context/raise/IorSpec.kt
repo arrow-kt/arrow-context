@@ -1,5 +1,6 @@
 package arrow.context.raise
 
+import arrow.context.nonEmptyList
 import arrow.core.Either
 import arrow.core.Ior
 import arrow.core.IorNel

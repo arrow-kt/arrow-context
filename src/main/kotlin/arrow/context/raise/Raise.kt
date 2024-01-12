@@ -286,7 +286,3 @@ public inline fun <Error> attempt(block: Raise<Error>.() -> Nothing): Error {
   }
   return merge(block)
 }
-
-context(Raise<Error>)
-@RaiseDSL
-public fun <Error> Error.raise(): Nothing = raise(this)

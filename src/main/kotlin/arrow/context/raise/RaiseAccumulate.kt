@@ -590,7 +590,7 @@ internal inline fun <Error, A, B> Iterable<A>.mapOrAccumulateTo(
         return@forEach
       }.let(::addAll)
     }
-  }.toNonEmptyListOrNull()!!.raise()
+  }.toNonEmptyListOrNull()!!.let(::raise)
 }
 
 @PublishedApi

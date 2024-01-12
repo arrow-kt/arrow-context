@@ -13,7 +13,8 @@ repositories {
 
 dependencies {
   implementation(libs.arrow.core)
-  implementation(libs.coroutines.test)
+  implementation(libs.arrow.fx.coroutines)
+  testImplementation(libs.coroutines.test)
   testImplementation(libs.kotlin.test)
   testImplementation(libs.kotest.assertionsCore)
   testImplementation(libs.kotest.property)

@@ -1,6 +1,7 @@
-package arrow.context.raise
+package arrow.context
 
 import arrow.core.*
+import io.kotest.assertions.fail
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.bind
 import io.kotest.property.arbitrary.boolean
@@ -218,3 +219,6 @@ fun <K, A, B, C> Arb.Companion.map3(
 ): Arb<Triple<Map<K, A>, Map<K, B>, Map<K, C>>> =
   Arb.map(arbK, value3(arbA, arbB, arbC), maxSize = 30)
     .map { it.destructured() }
+
+internal fun unreachable(): Nothing =
+  fail("It should never reach this point")

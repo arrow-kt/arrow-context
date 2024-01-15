@@ -1,25 +1,16 @@
 package arrow.context
 
 import arrow.context.raise.attempt
-import arrow.core.raise.Raise
 import arrow.core.*
-import arrow.core.raise.recover
+import arrow.core.raise.Raise
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.property.Arb
-import io.kotest.property.arbitrary.bind
-import io.kotest.property.arbitrary.boolean
-import io.kotest.property.arbitrary.choice
-import io.kotest.property.arbitrary.constant
-import io.kotest.property.arbitrary.int
-import io.kotest.property.arbitrary.list
-import io.kotest.property.arbitrary.set
-import io.kotest.property.arbitrary.long
-import io.kotest.property.arbitrary.map
-import io.kotest.property.arbitrary.of
-import io.kotest.property.arbitrary.orNull
-import io.kotest.property.arbitrary.string
+import io.kotest.property.arbitrary.*
 import kotlinx.coroutines.Dispatchers
-import kotlin.math.max
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.ParameterContext
+import org.junit.jupiter.api.extension.ParameterResolver
 import kotlin.Result.Companion.failure
 import kotlin.Result.Companion.success
 import kotlin.coroutines.Continuation
@@ -27,6 +18,9 @@ import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.intrinsics.intercepted
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 import kotlin.coroutines.startCoroutine
+import kotlin.math.max
+import kotlin.test.assertFails
+import kotlin.test.fail
 
 // copied from kotest-extensions-arrow
 
@@ -223,17 +217,37 @@ fun <K, A, B, C> Arb.Companion.map3(
   Arb.map(arbK, value3(arbA, arbB, arbC), maxSize = 30)
     .map { it.destructured() }
 
-inline fun <Error, A> shouldRaise(block: context(Raise<Error>) () -> A): Error =
+
+context(Raise<OuterError>)
+inline fun <OuterError> shouldRaise(block: context(Raise<OuterError>) () -> Any?): OuterError =
   attempt {
     val result = block(given())
-    throw AssertionError("Expected to raise an error, but instead succeeded with $result")
+    fail("Expected to raise an error, but instead succeeded with $result")
   }
 
-inline fun <Error, A> shouldRaise(expected: Error, block: context(Raise<Error>) () -> A): Error =
+context(Raise<OuterError>)
+@JvmName("shouldRaiseReified")
+inline fun <reified Error : Any, OuterError> shouldRaise(unit: Unit = Unit, block: context(Raise<OuterError>) () -> Any?): Error =
+  shouldRaise(block).shouldBeInstanceOf<Error>()
+
+context(Raise<OuterError>)
+inline fun <OuterError> shouldRaise(expected: OuterError, block: context(Raise<OuterError>) () -> Any?): OuterError =
   shouldRaise(block) shouldBe expected
 
-inline fun <Error, A> shouldSucceed(block: context(Raise<Error>) () -> A): A =
-  recover(block) { throw AssertionError("Expected to succeed, but raised $it") }
+class RaiseResolver : ParameterResolver {
 
-inline fun <Error, A> shouldSucceed(expected: A, block: context(Raise<Error>) () -> A): A =
-  shouldSucceed(block) shouldBe expected
+  override fun supportsParameter(
+    parameterContext: ParameterContext,
+    extensionContext: ExtensionContext
+  ) = parameterContext.parameter.type == Raise::class.java
+
+  override fun resolveParameter(
+    parameterContext: ParameterContext,
+    extensionContext: ExtensionContext
+  ) = FailingRaise as Raise<Any?>
+}
+
+private object FailingRaise : Raise<Any?> {
+  override fun raise(r: Any?): Nothing =
+    fail("Expected to succeed, but raised $r")
+}

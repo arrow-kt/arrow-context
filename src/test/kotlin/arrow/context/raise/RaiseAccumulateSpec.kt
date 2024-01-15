@@ -1,13 +1,18 @@
 package arrow.context.raise
 
+import arrow.context.RaiseResolver
 import arrow.context.shouldRaise
 import arrow.core.NonEmptyList
 import arrow.core.nel
 import arrow.core.nonEmptyListOf
+import arrow.core.raise.Raise
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.Test
 
+@ExtendWith(RaiseResolver::class)
 class RaiseAccumulateSpec {
+  context(Raise<NonEmptyList<String>>)
   @Test fun raiseAccumulateTakesPrecedenceOverExtensionFunction() = runTest {
     shouldRaise(nonEmptyListOf("false", "1: IsFalse", "2: IsFalse")) {
       zipOrAccumulate(
@@ -17,6 +22,7 @@ class RaiseAccumulateSpec {
     }
   }
 
+  context(Raise<NonEmptyList<String>>)
   @Test fun raiseAccumulateTakesPrecedenceOverExtensionFunction2() = runTest {
     shouldRaise(nonEmptyListOf("false", "1: IsFalse", "2: IsFalse")) {
       zipOrAccumulate(

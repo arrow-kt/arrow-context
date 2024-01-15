@@ -15,7 +15,7 @@ dependencies {
   implementation(libs.arrow.core)
   implementation(libs.arrow.fx.coroutines)
   testImplementation(libs.coroutines.test)
-  testImplementation(libs.kotlin.test)
+  testImplementation(libs.kotlin.test.junit5)
   testImplementation(libs.kotest.assertionsCore)
   testImplementation(libs.kotest.property)
 }

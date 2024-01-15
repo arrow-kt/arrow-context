@@ -1,7 +1,10 @@
 package arrow.context
 
+import arrow.context.raise.attempt
+import arrow.core.raise.Raise
 import arrow.core.*
-import io.kotest.assertions.fail
+import arrow.core.raise.recover
+import io.kotest.matchers.shouldBe
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.bind
 import io.kotest.property.arbitrary.boolean
@@ -220,5 +223,17 @@ fun <K, A, B, C> Arb.Companion.map3(
   Arb.map(arbK, value3(arbA, arbB, arbC), maxSize = 30)
     .map { it.destructured() }
 
-internal fun unreachable(): Nothing =
-  fail("It should never reach this point")
+inline fun <Error, A> shouldRaise(block: context(Raise<Error>) () -> A): Error =
+  attempt {
+    val result = block(this)
+    throw AssertionError("Expected to raise an error, but instead succeeded with $result")
+  }
+
+inline fun <Error, A> shouldRaise(expected: Error, block: context(Raise<Error>) () -> A): Error =
+  shouldRaise(block) shouldBe expected
+
+inline fun <Error, A> shouldSucceed(block: context(Raise<Error>) () -> A): A =
+  recover(block) { throw AssertionError("Expected to succeed, but raised $it") }
+
+inline fun <Error, A> shouldSucceed(expected: A, block: context(Raise<Error>) () -> A): A =
+  shouldSucceed(block) shouldBe expected

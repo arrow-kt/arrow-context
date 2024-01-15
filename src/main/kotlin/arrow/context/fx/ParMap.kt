@@ -2,6 +2,7 @@
 
 package arrow.context.fx
 
+import arrow.context.given
 import arrow.context.raise.RaiseAccumulate
 import arrow.context.raise.attempt
 import arrow.context.raise.mapOrAccumulate
@@ -32,7 +33,7 @@ public suspend fun <Error, A, B> Iterable<A>.parMapOrAccumulate(
       async(context) {
         attempt {
           return@async semaphore.withPermit {
-            transform(this@coroutineScope, RaiseAccumulate(this), this, it).right()
+            transform(this@coroutineScope, RaiseAccumulate(given()), given(), it).right()
           }
         }.reduce(combine).left()
       }
@@ -49,7 +50,7 @@ public suspend fun <Error, A, B> Iterable<A>.parMapOrAccumulate(
     map {
       async(context) {
         attempt {
-          return@async transform(this@coroutineScope, RaiseAccumulate(this), this, it).right()
+          return@async transform(this@coroutineScope, RaiseAccumulate(given()), given(), it).right()
         }.reduce(combine).left()
       }
     }.awaitAll().mapOrAccumulate(combine) { it.bind() }

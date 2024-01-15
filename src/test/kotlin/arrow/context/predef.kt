@@ -225,7 +225,7 @@ fun <K, A, B, C> Arb.Companion.map3(
 
 inline fun <Error, A> shouldRaise(block: context(Raise<Error>) () -> A): Error =
   attempt {
-    val result = block(this)
+    val result = block(given())
     throw AssertionError("Expected to raise an error, but instead succeeded with $result")
   }
 

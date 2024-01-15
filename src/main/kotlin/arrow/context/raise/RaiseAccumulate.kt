@@ -7,10 +7,10 @@ import arrow.context.EmptyValue
 import arrow.context.EmptyValue.combine
 import arrow.context.EmptyValue.ensureNotEmpty
 import arrow.context.EmptyValue.unbox
+import arrow.context.given
 import arrow.core.*
 import arrow.core.raise.Raise
 import arrow.core.raise.RaiseDSL
-import arrow.core.raise.withError
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind.AT_MOST_ONCE
 import kotlin.contracts.contract
@@ -555,13 +555,13 @@ internal inline fun <Error, A, B> Iterable<A>.mapOrAccumulateTo(
   val iterator = iterator()
   val firstError: Error = attempt {
     for (item in iterator) {
-      accumulate(item, transform(RaiseAccumulate(this), this, item))
+      accumulate(item, transform(RaiseAccumulate(given()), given(), item))
     }
     return
   }.reduce(combine)
   iterator.fold(firstError) { error, item ->
     val newError = attempt {
-      transform(RaiseAccumulate(this), this, item)
+      transform(RaiseAccumulate(given()), given(), item)
       return@fold error
     }.reduce(combine)
     combine(error, newError)
@@ -578,7 +578,7 @@ internal inline fun <Error, A, B> Iterable<A>.mapOrAccumulateTo(
   val iterator = iterator()
   val firstError = attempt {
     for (item in iterator) {
-      accumulate(item, transform(RaiseAccumulate(this), this, item))
+      accumulate(item, transform(RaiseAccumulate(given()), given(), item))
     }
     return
   }
@@ -586,7 +586,7 @@ internal inline fun <Error, A, B> Iterable<A>.mapOrAccumulateTo(
     addAll(firstError)
     iterator.forEach { item ->
       attempt {
-        transform(RaiseAccumulate(this), this, item)
+        transform(RaiseAccumulate(given()), given(), item)
         return@forEach
       }.let(::addAll)
     }
@@ -714,7 +714,7 @@ internal inline fun <Error, A> valueOrEmpty(
   contract {
     callsInPlace(block, AT_MOST_ONCE)
   }
-  accumulate(attempt { return block(RaiseAccumulate(this), this) })
+  accumulate(attempt { return block(RaiseAccumulate(given()), given()) })
   return EmptyValue
 }
 

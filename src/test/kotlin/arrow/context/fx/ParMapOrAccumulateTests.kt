@@ -3,11 +3,10 @@ package arrow.context.fx
 import arrow.atomic.AtomicInt
 import arrow.atomic.update
 import arrow.context.RaiseResolver
-import arrow.context.shouldRaise
+import arrow.context.TestingRaise
 import arrow.context.throwable
 import arrow.core.NonEmptyList
 import arrow.core.nonFatalOrThrow
-import arrow.core.raise.Raise
 import arrow.fx.coroutines.ResourceScope
 import arrow.fx.coroutines.resourceScope
 import arrow.fx.coroutines.singleThreadContext
@@ -28,7 +27,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @ExtendWith(RaiseResolver::class)
 class ParMapOrAccumulateTests {
-  context(Raise<Nothing>)
+  context(TestingRaise<Nothing>)
   @Test
   fun parMapOrAccumulateIsStackSafe() = runTestUsingDefaultDispatcher {
     val count = stackSafeIteration()
@@ -40,7 +39,7 @@ class ParMapOrAccumulateTests {
     ref.get() shouldBe count
   }
 
-  context(Raise<Nothing>)
+  context(TestingRaise<Nothing>)
   @Test
   fun parMapOrAccumulateRunsInParallel() = runTest {
     val promiseA = CompletableDeferred<Unit>()
@@ -59,7 +58,7 @@ class ParMapOrAccumulateTests {
     }).parMapOrAccumulate(combine = emptyError) { it.invoke() }
   }
 
-  context(Raise<Nothing>)
+  context(TestingRaise<Nothing>)
   @Test
   fun parMapOrAccumulateResultsInTheCorrectError() = runTestUsingDefaultDispatcher {
     checkAll(
@@ -73,7 +72,7 @@ class ParMapOrAccumulateTests {
     }
   }
 
-  context(Raise<Nothing>)
+  context(TestingRaise<Nothing>)
   @Test
   fun parMapOrAccumulateConcurrency1OnlyRunsOneTaskAtATime() = runTest {
     val promiseA = CompletableDeferred<Unit>()
@@ -86,7 +85,7 @@ class ParMapOrAccumulateTests {
     } shouldBe null
   }
 
-  context(Raise<NonEmptyList<String>>)
+  context(TestingRaise<NonEmptyList<String>>)
   @Test
   fun parMapOrAccumulateAccumulatesShifts() = runTestUsingDefaultDispatcher {
     checkAll(Arb.string()) { e ->
@@ -99,7 +98,7 @@ class ParMapOrAccumulateTests {
   }
 
 
-  context(Raise<Nothing>)
+  context(TestingRaise<Nothing>)
   @Test
   fun parMapOrAccumulateCombineEmptyErrorRunsOnProvidedContext() =
     runTestUsingDefaultDispatcher { // 100 is same default length as Arb.list
@@ -112,7 +111,7 @@ class ParMapOrAccumulateTests {
       }
     }
 
-  context(Raise<Nothing>)
+  context(TestingRaise<Nothing>)
   @Test
   fun parMapOrAccumulateCombineEmptyErrorConcurrency3RunsOnProvidedContext() =
     runTestUsingDefaultDispatcher { // 100 is same default length as Arb.list
@@ -125,7 +124,7 @@ class ParMapOrAccumulateTests {
       }
     }
 
-  context(Raise<NonEmptyList<String>>)
+  context(TestingRaise<NonEmptyList<String>>)
   @Test
   fun parMapOrAccumulateRunsOnProvidedContext() =
     runTestUsingDefaultDispatcher { // 100 is same default length as Arb.list
@@ -138,7 +137,7 @@ class ParMapOrAccumulateTests {
       }
     }
 
-  context(Raise<NonEmptyList<String>>)
+  context(TestingRaise<NonEmptyList<String>>)
   @Test
   fun parMapOrAccumulateConcurrency3RunsOnProvidedContext() =
     runTestUsingDefaultDispatcher { // 100 is same default length as Arb.list

@@ -217,37 +217,36 @@ fun <K, A, B, C> Arb.Companion.map3(
   Arb.map(arbK, value3(arbA, arbB, arbC), maxSize = 30)
     .map { it.destructured() }
 
-
-context(Raise<OuterError>)
-inline fun <OuterError> shouldRaise(block: context(Raise<OuterError>) () -> Any?): OuterError =
-  attempt {
-    val result = block(given())
-    fail("Expected to raise an error, but instead succeeded with $result")
-  }
-
-context(Raise<OuterError>)
-@JvmName("shouldRaiseReified")
-inline fun <reified Error : Any, OuterError> shouldRaise(unit: Unit = Unit, block: context(Raise<OuterError>) () -> Any?): Error =
-  shouldRaise(block).shouldBeInstanceOf<Error>()
-
-context(Raise<OuterError>)
-inline fun <OuterError> shouldRaise(expected: OuterError, block: context(Raise<OuterError>) () -> Any?): OuterError =
-  shouldRaise(block) shouldBe expected
-
 class RaiseResolver : ParameterResolver {
-
   override fun supportsParameter(
     parameterContext: ParameterContext,
     extensionContext: ExtensionContext
-  ) = parameterContext.parameter.type == Raise::class.java
+  ) = parameterContext.parameter.type == TestingRaise::class.java
 
   override fun resolveParameter(
     parameterContext: ParameterContext,
     extensionContext: ExtensionContext
-  ) = FailingRaise as Raise<Any?>
+  ) = TestingRaise<Any?>()
 }
 
-private object FailingRaise : Raise<Any?> {
-  override fun raise(r: Any?): Nothing =
+@Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE)
+@DslMarker
+annotation class TestingRaiseDsl
+
+@TestingRaiseDsl
+class TestingRaise<Error> : Raise<Error> {
+  override fun raise(r: Error): Nothing =
     fail("Expected to succeed, but raised $r")
+
+  inline fun shouldRaiseAny(block: context((@TestingRaiseDsl Raise<Error>)) () -> Any?): Error =
+    attempt {
+      val result = block(given())
+      fail("Expected to raise an error, but instead succeeded with $result")
+    }
+
+  inline fun <reified ExpectedError : Any> shouldRaise(unit: Unit = Unit, block: context((@TestingRaiseDsl Raise<Error>)) () -> Any?): ExpectedError =
+    shouldRaiseAny(block).shouldBeInstanceOf<ExpectedError>()
+
+  inline fun shouldRaise(expected: Error, block: context((@TestingRaiseDsl Raise<Error>)) () -> Any?): Error =
+    shouldRaiseAny(block) shouldBe expected
 }

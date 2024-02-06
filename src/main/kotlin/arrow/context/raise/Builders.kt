@@ -154,7 +154,7 @@ public inline fun impure(block: context(Raise<Unit>) () -> Unit) {
 
 context(Raise<Unit>)
 @RaiseDSL
-public fun Raise<Unit>.raise(): Nothing = raise(Unit)
+public fun raise(): Nothing = raise(Unit)
 
 context(Raise<Unit>)
 @RaiseDSL

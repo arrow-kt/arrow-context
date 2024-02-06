@@ -1,8 +1,10 @@
 package arrow.context
 
-import arrow.context.raise.raise
 import arrow.core.identity
 import arrow.core.raise.Raise
+import arrow.core.raise.recover
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 /**
  * This is a work-around for having nested nulls in generic code.
@@ -20,9 +22,50 @@ internal object EmptyValue {
     fold(first, { second }, { t: T -> combine(t, second) })
 
   @Suppress("UNCHECKED_CAST")
-  inline fun <T, R> fold(value: Any?, ifEmpty: () -> R, ifNotEmpty: (T) -> R): R =
-    if (value === EmptyValue) ifEmpty() else ifNotEmpty(value as T)
+  inline fun <T, R> fold(value: Any?, ifEmpty: () -> R, ifNotEmpty: (T) -> R): R {
+    contract {
+      callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
+      callsInPlace(ifNotEmpty, InvocationKind.AT_MOST_ONCE)
+    }
+    return if (value === EmptyValue) ifEmpty() else ifNotEmpty(value as T)
+  }
 
-  context(Raise<Unit>)
-  fun <T> ensureNotEmpty(value: Any?): T = fold(value, { raise() }, ::identity)
+  inline fun <T> unboxOrElse(value: Any?, ifEmpty: () -> T): T {
+    contract {
+      callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
+    }
+    return fold(value, ifEmpty, ::identity)
+  }
+}
+
+@PublishedApi
+internal class FailureValue(val error: Any?) {
+  companion object {
+    @Suppress("UNCHECKED_CAST")
+    inline fun <E, T, R> fold(value: Any?, ifEmpty: (E) -> R, ifNotEmpty: (T) -> R): R {
+      contract {
+        callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(ifNotEmpty, InvocationKind.AT_MOST_ONCE)
+      }
+      return if (value is FailureValue) ifEmpty(value.error as E) else ifNotEmpty(value as T)
+    }
+
+    inline fun <E, T> unboxOrElse(value: Any?, ifEmpty: (E) -> T): T {
+      contract {
+        callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
+      }
+      return fold(value, ifEmpty, ::identity)
+    }
+
+    context(Raise<E>)
+    fun <E, T> bind(value: Any?): T =
+      unboxOrElse<E, T>(value) { raise(it) }
+
+    inline fun <E, T> maybeFailure(block: context(Raise<E>) () -> T): Any? {
+      contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+      }
+      return recover(block, ::FailureValue)
+    }
+  }
 }

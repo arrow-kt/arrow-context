@@ -2,21 +2,18 @@
 
 package arrow.context.fx
 
+import arrow.context.FailureValue
+import arrow.context.FailureValue.Companion.bind
+import arrow.context.FailureValue.Companion.maybeFailure
 import arrow.context.given
 import arrow.context.raise.RaiseAccumulate
-import arrow.context.raise.attempt
 import arrow.context.raise.mapOrAccumulate
 import arrow.core.NonEmptyList
-import arrow.core.left
 import arrow.core.raise.Raise
-import arrow.core.raise.either
-import arrow.core.right
+import arrow.core.raise.recover
+import arrow.fx.coroutines.parMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -28,16 +25,15 @@ public suspend fun <Error, A, B> Iterable<A>.parMapOrAccumulate(
   transform: suspend context(CoroutineScope, Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
 ): List<B> =
   coroutineScope {
-    val semaphore = Semaphore(concurrency)
-    map {
-      async(context) {
-        attempt {
-          return@async semaphore.withPermit {
-            transform(this@coroutineScope, RaiseAccumulate(given()), given(), it).right()
-          }
-        }.reduce(combine).left()
+    parMap(context, concurrency) {
+      recover({
+        transform(this@coroutineScope, RaiseAccumulate(given()), given(), it)
+      }) {
+        FailureValue(it.reduce(combine))
       }
-    }.awaitAll().mapOrAccumulate(combine) { it.bind() }
+    }.mapOrAccumulate(combine) { maybeFailure ->
+      FailureValue.unboxOrElse<Error, B>(maybeFailure) { raise(it) }
+    }
   }
 
 context(Raise<Error>)
@@ -47,13 +43,15 @@ public suspend fun <Error, A, B> Iterable<A>.parMapOrAccumulate(
   transform: suspend context(CoroutineScope, Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
 ): List<B> =
   coroutineScope {
-    map {
-      async(context) {
-        attempt {
-          return@async transform(this@coroutineScope, RaiseAccumulate(given()), given(), it).right()
-        }.reduce(combine).left()
+    parMap(context) {
+      recover({
+        transform(this@coroutineScope, RaiseAccumulate(given()), given(), it)
+      }) {
+        FailureValue(it.reduce(combine))
       }
-    }.awaitAll().mapOrAccumulate(combine) { it.bind() }
+    }.mapOrAccumulate(combine) { maybeFailure ->
+      FailureValue.unboxOrElse<Error, B>(maybeFailure) { raise(it) }
+    }
   }
 
 context(Raise<NonEmptyList<Error>>)
@@ -63,16 +61,13 @@ public suspend fun <Error, A, B> Iterable<A>.parMapOrAccumulate(
   transform: suspend context(CoroutineScope, Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
 ): List<B> =
   coroutineScope {
-    val semaphore = Semaphore(concurrency)
-    map {
-      async(context) {
-        either {
-          semaphore.withPermit {
-            transform(this@coroutineScope, RaiseAccumulate(this), this, it)
-          }
-        }
+    parMap(context, concurrency) {
+      maybeFailure {
+        transform(this@coroutineScope, RaiseAccumulate(given()), given(), it)
       }
-    }.awaitAll().mapOrAccumulate { it.bind() }
+    }.mapOrAccumulate { maybeFailure ->
+      bind<NonEmptyList<Error>, B>(maybeFailure)
+    }
   }
 
 context(Raise<NonEmptyList<Error>>)
@@ -81,11 +76,11 @@ public suspend fun <Error, A, B> Iterable<A>.parMapOrAccumulate(
   transform: suspend context(CoroutineScope, Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
 ): List<B> =
   coroutineScope {
-    map {
-      async(context) {
-        either {
-          transform(this@coroutineScope, RaiseAccumulate(this), this, it)
-        }
+    parMap(context) {
+      maybeFailure {
+        transform(this@coroutineScope, RaiseAccumulate(given()), given(), it)
       }
-    }.awaitAll().mapOrAccumulate { it.bind() }
+    }.mapOrAccumulate { maybeFailure ->
+      bind<NonEmptyList<Error>, B>(maybeFailure)
+    }
   }

@@ -2,11 +2,13 @@
 
 package arrow.context.fx
 
+import arrow.context.FailureValue.Companion.bind
+import arrow.context.FailureValue.Companion.maybeFailure
+import arrow.context.given
 import arrow.context.raise.RaiseAccumulate
 import arrow.context.raise.zipOrAccumulate
 import arrow.core.NonEmptyList
 import arrow.core.raise.Raise
-import arrow.core.raise.either
 import arrow.fx.coroutines.parZip
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.CoroutineContext
@@ -32,10 +34,10 @@ public suspend inline fun <E, A, B, C> parZipOrAccumulate(
 ): C =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b ->
-    zipOrAccumulate(combine, { a.bind() }, { b.bind() }) { aa, bb -> transform(aa, bb) }
+    zipOrAccumulate(combine, { bind<E, A>(a) }, { bind<E, B>(b) }) { aa, bb -> transform(aa, bb) }
   }
 
 context(Raise<NonEmptyList<E>>)
@@ -55,10 +57,10 @@ public suspend inline fun <E, A, B, C> parZipOrAccumulate(
 ): C =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b ->
-    zipOrAccumulate({ a.bind() }, { b.bind() }) { aa, bb -> transform(aa, bb) }
+    zipOrAccumulate({ bind<E, A>(a) }, { bind<E, B>(b) }) { aa, bb -> transform(aa, bb) }
   }
 //endregion
 
@@ -84,11 +86,11 @@ public suspend inline fun <E, A, B, C, D> parZipOrAccumulate(
 ): D =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c ->
-    zipOrAccumulate(combine, { a.bind() }, { b.bind() }, { c.bind() }) { aa, bb, cc -> transform(aa, bb, cc) }
+    zipOrAccumulate(combine, { bind<E, A>(a) }, { bind<E, B>(b) }, { bind<E, C>(c) }) { aa, bb, cc -> transform(aa, bb, cc) }
   }
 
 context(Raise<NonEmptyList<E>>)
@@ -110,11 +112,11 @@ public suspend inline fun <E, A, B, C, D> parZipOrAccumulate(
 ): D =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c ->
-    zipOrAccumulate({ a.bind() }, { b.bind() }, { c.bind() }) { aa, bb, cc -> transform(aa, bb, cc) }
+    zipOrAccumulate({ bind<E, A>(a) }, { bind<E, B>(b) }, { bind<E, C>(c) }) { aa, bb, cc -> transform(aa, bb, cc) }
   }
 //endregion
 
@@ -142,12 +144,12 @@ public suspend inline fun <E, A, B, C, D, F> parZipOrAccumulate(
 ): F =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d ->
-    zipOrAccumulate(combine, { a.bind() }, { b.bind() }, { c.bind() }, { d.bind() }) { aa, bb, cc, dd ->
+    zipOrAccumulate(combine, { bind<E, A>(a) }, { bind<E, B>(b) }, { bind<E, C>(c) }, { bind<E, D>(d) }) { aa, bb, cc, dd ->
       transform(aa, bb, cc, dd)
     }
   }
@@ -173,12 +175,12 @@ public suspend inline fun <E, A, B, C, D, F> parZipOrAccumulate(
 ): F =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d ->
-    zipOrAccumulate({ a.bind() }, { b.bind() }, { c.bind() }, { d.bind() }) { aa, bb, cc, dd ->
+    zipOrAccumulate({ bind<E, A>(a) }, { bind<E, B>(b) }, { bind<E, C>(c) }, { bind<E, D>(d) }) { aa, bb, cc, dd ->
       transform(aa, bb, cc, dd)
     }
   }
@@ -210,19 +212,19 @@ public suspend inline fun <E, A, B, C, D, F, G> parZipOrAccumulate(
 ): G =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } },
-    { either { ff(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { ff(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d, f ->
     zipOrAccumulate(
       combine,
-      { a.bind() },
-      { b.bind() },
-      { c.bind() },
-      { d.bind() },
-      { f.bind() }) { aa, bb, cc, dd, ff ->
+      { bind<E, A>(a) },
+      { bind<E, B>(b) },
+      { bind<E, C>(c) },
+      { bind<E, D>(d) },
+      { bind<E, F>(f) }) { aa, bb, cc, dd, ff ->
       transform(aa, bb, cc, dd, ff)
     }
   }
@@ -250,13 +252,18 @@ public suspend inline fun <E, A, B, C, D, F, G> parZipOrAccumulate(
 ): G =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } },
-    { either { ff(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { ff(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d, f ->
-    zipOrAccumulate({ a.bind() }, { b.bind() }, { c.bind() }, { d.bind() }, { f.bind() }) { aa, bb, cc, dd, ff ->
+    zipOrAccumulate(
+      { bind<E, A>(a) },
+      { bind<E, B>(b) },
+      { bind<E, C>(c) },
+      { bind<E, D>(d) },
+      { bind<E, F>(f) }) { aa, bb, cc, dd, ff ->
       transform(aa, bb, cc, dd, ff)
     }
   }
@@ -290,21 +297,21 @@ public suspend inline fun <E, A, B, C, D, F, G, H> parZipOrAccumulate(
 ): H =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } },
-    { either { ff(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fg(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { ff(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fg(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d, f, g ->
     zipOrAccumulate(
       combine,
-      { a.bind() },
-      { b.bind() },
-      { c.bind() },
-      { d.bind() },
-      { f.bind() },
-      { g.bind() }) { aa, bb, cc, dd, ff, gg ->
+      { bind<E, A>(a) },
+      { bind<E, B>(b) },
+      { bind<E, C>(c) },
+      { bind<E, D>(d) },
+      { bind<E, F>(f) },
+      { bind<E, G>(g) }) { aa, bb, cc, dd, ff, gg ->
       transform(aa, bb, cc, dd, ff, gg)
     }
   }
@@ -334,20 +341,20 @@ public suspend inline fun <E, A, B, C, D, F, G, H> parZipOrAccumulate(
 ): H =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } },
-    { either { ff(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fg(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { ff(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fg(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d, f, g ->
     zipOrAccumulate(
-      { a.bind() },
-      { b.bind() },
-      { c.bind() },
-      { d.bind() },
-      { f.bind() },
-      { g.bind() }) { aa, bb, cc, dd, ff, gg ->
+      { bind<E, A>(a) },
+      { bind<E, B>(b) },
+      { bind<E, C>(c) },
+      { bind<E, D>(d) },
+      { bind<E, F>(f) },
+      { bind<E, G>(g) }) { aa, bb, cc, dd, ff, gg ->
       transform(aa, bb, cc, dd, ff, gg)
     }
   }
@@ -383,23 +390,23 @@ public suspend inline fun <E, A, B, C, D, F, G, H, I> parZipOrAccumulate(
 ): I =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } },
-    { either { ff(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fg(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fh(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { ff(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fg(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fh(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d, f, g, h ->
     zipOrAccumulate(
       combine,
-      { a.bind() },
-      { b.bind() },
-      { c.bind() },
-      { d.bind() },
-      { f.bind() },
-      { g.bind() },
-      { h.bind() }) { aa, bb, cc, dd, ff, gg, hh ->
+      { bind<E, A>(a) },
+      { bind<E, B>(b) },
+      { bind<E, C>(c) },
+      { bind<E, D>(d) },
+      { bind<E, F>(f) },
+      { bind<E, G>(g) },
+      { bind<E, H>(h) }) { aa, bb, cc, dd, ff, gg, hh ->
       transform(aa, bb, cc, dd, ff, gg, hh)
     }
   }
@@ -431,22 +438,22 @@ public suspend inline fun <E, A, B, C, D, F, G, H, I> parZipOrAccumulate(
 ): I =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } },
-    { either { ff(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fg(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fh(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { ff(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fg(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fh(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d, f, g, h ->
     zipOrAccumulate(
-      { a.bind() },
-      { b.bind() },
-      { c.bind() },
-      { d.bind() },
-      { f.bind() },
-      { g.bind() },
-      { h.bind() }) { aa, bb, cc, dd, ff, gg, hh ->
+      { bind<E, A>(a) },
+      { bind<E, B>(b) },
+      { bind<E, C>(c) },
+      { bind<E, D>(d) },
+      { bind<E, F>(f) },
+      { bind<E, G>(g) },
+      { bind<E, H>(h) }) { aa, bb, cc, dd, ff, gg, hh ->
       transform(aa, bb, cc, dd, ff, gg, hh)
     }
   }
@@ -484,25 +491,25 @@ public suspend inline fun <E, A, B, C, D, F, G, H, I, J> parZipOrAccumulate(
 ): J =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } },
-    { either { ff(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fg(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fh(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fi(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { ff(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fg(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fh(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fi(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d, f, g, h, i ->
     zipOrAccumulate(
       combine,
-      { a.bind() },
-      { b.bind() },
-      { c.bind() },
-      { d.bind() },
-      { f.bind() },
-      { g.bind() },
-      { h.bind() },
-      { i.bind() }) { aa, bb, cc, dd, ff, gg, hh, ii ->
+      { bind<E, A>(a) },
+      { bind<E, B>(b) },
+      { bind<E, C>(c) },
+      { bind<E, D>(d) },
+      { bind<E, F>(f) },
+      { bind<E, G>(g) },
+      { bind<E, H>(h) },
+      { bind<E, I>(i) }) { aa, bb, cc, dd, ff, gg, hh, ii ->
       transform(aa, bb, cc, dd, ff, gg, hh, ii)
     }
   }
@@ -536,24 +543,24 @@ public suspend inline fun <E, A, B, C, D, F, G, H, I, J> parZipOrAccumulate(
 ): J =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } },
-    { either { ff(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fg(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fh(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fi(this@parZip, RaiseAccumulate(this), this) } },
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { ff(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fg(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fh(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fi(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d, f, g, h, i ->
     zipOrAccumulate(
-      { a.bind() },
-      { b.bind() },
-      { c.bind() },
-      { d.bind() },
-      { f.bind() },
-      { g.bind() },
-      { h.bind() },
-      { i.bind() }) { aa, bb, cc, dd, ff, gg, hh, ii ->
+      { bind<E, A>(a) },
+      { bind<E, B>(b) },
+      { bind<E, C>(c) },
+      { bind<E, D>(d) },
+      { bind<E, F>(f) },
+      { bind<E, G>(g) },
+      { bind<E, H>(h) },
+      { bind<E, I>(i) }) { aa, bb, cc, dd, ff, gg, hh, ii ->
       transform(aa, bb, cc, dd, ff, gg, hh, ii)
     }
   }
@@ -593,27 +600,27 @@ public suspend inline fun <E, A, B, C, D, F, G, H, I, J, K> parZipOrAccumulate(
 ): K =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } },
-    { either { ff(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fg(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fh(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fi(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fj(this@parZip, RaiseAccumulate(this), this) } }
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { ff(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fg(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fh(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fi(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fj(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d, f, g, h, i, j ->
     zipOrAccumulate(
       combine,
-      { a.bind() },
-      { b.bind() },
-      { c.bind() },
-      { d.bind() },
-      { f.bind() },
-      { g.bind() },
-      { h.bind() },
-      { i.bind() },
-      { j.bind() }) { aa, bb, cc, dd, ff, gg, hh, ii, jj ->
+      { bind<E, A>(a) },
+      { bind<E, B>(b) },
+      { bind<E, C>(c) },
+      { bind<E, D>(d) },
+      { bind<E, F>(f) },
+      { bind<E, G>(g) },
+      { bind<E, H>(h) },
+      { bind<E, I>(i) },
+      { bind<E, J>(j) }) { aa, bb, cc, dd, ff, gg, hh, ii, jj ->
       transform(aa, bb, cc, dd, ff, gg, hh, ii, jj)
     }
   }
@@ -649,26 +656,26 @@ public suspend inline fun <E, A, B, C, D, F, G, H, I, J, K> parZipOrAccumulate(
 ): K =
   parZip(
     context,
-    { either { fa(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fb(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fc(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fd(this@parZip, RaiseAccumulate(this), this) } },
-    { either { ff(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fg(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fh(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fi(this@parZip, RaiseAccumulate(this), this) } },
-    { either { fj(this@parZip, RaiseAccumulate(this), this) } },
+    { maybeFailure { fa(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fb(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fc(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fd(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { ff(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fg(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fh(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fi(this@parZip, RaiseAccumulate(given()), given()) } },
+    { maybeFailure { fj(this@parZip, RaiseAccumulate(given()), given()) } }
   ) { a, b, c, d, f, g, h, i, j ->
     zipOrAccumulate(
-      { a.bind() },
-      { b.bind() },
-      { c.bind() },
-      { d.bind() },
-      { f.bind() },
-      { g.bind() },
-      { h.bind() },
-      { i.bind() },
-      { j.bind() }) { aa, bb, cc, dd, ff, gg, hh, ii, jj ->
+      { bind<E, A>(a) },
+      { bind<E, B>(b) },
+      { bind<E, C>(c) },
+      { bind<E, D>(d) },
+      { bind<E, F>(f) },
+      { bind<E, G>(g) },
+      { bind<E, H>(h) },
+      { bind<E, I>(i) },
+      { bind<E, J>(j) }) { aa, bb, cc, dd, ff, gg, hh, ii, jj ->
       transform(aa, bb, cc, dd, ff, gg, hh, ii, jj)
     }
   }

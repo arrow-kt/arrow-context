@@ -19,7 +19,6 @@ import kotlin.coroutines.intrinsics.intercepted
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 import kotlin.coroutines.startCoroutine
 import kotlin.math.max
-import kotlin.test.assertFails
 import kotlin.test.fail
 
 // copied from kotest-extensions-arrow

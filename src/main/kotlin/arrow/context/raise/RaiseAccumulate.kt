@@ -5,8 +5,8 @@ package arrow.context.raise
 
 import arrow.context.EmptyValue
 import arrow.context.EmptyValue.combine
-import arrow.context.EmptyValue.ensureNotEmpty
 import arrow.context.EmptyValue.unbox
+import arrow.context.EmptyValue.unboxOrElse
 import arrow.context.given
 import arrow.core.*
 import arrow.core.raise.Raise
@@ -256,14 +256,11 @@ public inline fun <Error, A, B, C, D, E, F, G, H, I, J> zipOrAccumulate(
 ): J {
   contract { callsInPlace(block, AT_MOST_ONCE) }
   var error: Any? = EmptyValue
-  withError({ unbox(error) }) {
-    return zipOrAccumulate(action1, action2, action3, action4, action5, action6, action7, action8, action9, block) {
-      error = combine(error, it.reduce(combine), combine)
-    }
-  }
+  return zipOrAccumulate(action1, action2, action3, action4, action5, action6, action7, action8, action9, block, {
+    error = combine(error, it.reduce(combine), combine)
+  }) { raise(unbox(error)) }
 }
 
-context(Raise<Unit>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F, G, H, I, J> zipOrAccumulate(
   action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
@@ -276,7 +273,8 @@ public inline fun <Error, A, B, C, D, E, F, G, H, I, J> zipOrAccumulate(
   action8: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> H,
   action9: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> I,
   block: (A, B, C, D, E, F, G, H, I) -> J,
-  accumulate: (NonEmptyList<Error>) -> Unit
+  accumulate: (NonEmptyList<Error>) -> Unit,
+  raise: () -> Nothing
 ): J {
   contract { callsInPlace(block, AT_MOST_ONCE) }
   val a = valueOrEmpty(action1, accumulate)
@@ -289,15 +287,15 @@ public inline fun <Error, A, B, C, D, E, F, G, H, I, J> zipOrAccumulate(
   val h = valueOrEmpty(action8, accumulate)
   val i = valueOrEmpty(action9, accumulate)
   return block(
-    ensureNotEmpty(a),
-    ensureNotEmpty(b),
-    ensureNotEmpty(c),
-    ensureNotEmpty(d),
-    ensureNotEmpty(e),
-    ensureNotEmpty(f),
-    ensureNotEmpty(g),
-    ensureNotEmpty(h),
-    ensureNotEmpty(i)
+    unboxOrElse(a, raise),
+    unboxOrElse(b, raise),
+    unboxOrElse(c, raise),
+    unboxOrElse(d, raise),
+    unboxOrElse(e, raise),
+    unboxOrElse(f, raise),
+    unboxOrElse(g, raise),
+    unboxOrElse(h, raise),
+    unboxOrElse(i, raise)
   )
 }
 
@@ -527,41 +525,38 @@ public inline fun <Error, A, B, C, D, E, F, G, H, I, J> zipOrAccumulate(
 ): J {
   contract { callsInPlace(block, AT_MOST_ONCE) }
   val error: MutableList<Error> = mutableListOf()
-  return withError({ error.toNonEmptyListOrNull()!! }) {
-    zipOrAccumulate(
-      action1,
-      action2,
-      action3,
-      action4,
-      action5,
-      action6,
-      action7,
-      action8,
-      action9,
-      block,
-      error::addAll
-    )
-  }
+  return zipOrAccumulate(
+    action1,
+    action2,
+    action3,
+    action4,
+    action5,
+    action6,
+    action7,
+    action8,
+    action9,
+    block,
+    error::addAll
+  ) { raise(error.toNonEmptyListOrNull()!!) }
 }
 
 context(Raise<Error>)
 @RaiseDSL
 @PublishedApi
-internal inline fun <Error, A, B> Iterable<A>.mapOrAccumulateTo(
-  accumulate: (A, B) -> Unit,
+internal inline fun <Error, A> Iterable<A>.forEachAccumulating(
   combine: (Error, Error) -> Error,
-  transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
+  operation: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A, Boolean) -> Unit
 ) {
   val iterator = iterator()
   val firstError: Error = attempt {
     for (item in iterator) {
-      accumulate(item, transform(RaiseAccumulate(given()), given(), item))
+      operation(RaiseAccumulate(given()), given(), item, false)
     }
     return
   }.reduce(combine)
   iterator.fold(firstError) { error, item ->
     val newError = attempt {
-      transform(RaiseAccumulate(given()), given(), item)
+      operation(RaiseAccumulate(given()), given(), item, true)
       return@fold error
     }.reduce(combine)
     combine(error, newError)
@@ -571,14 +566,13 @@ internal inline fun <Error, A, B> Iterable<A>.mapOrAccumulateTo(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 @PublishedApi
-internal inline fun <Error, A, B> Iterable<A>.mapOrAccumulateTo(
-  accumulate: (A, B) -> Unit,
-  transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
+internal inline fun <Error, A> Iterable<A>.forEachAccumulating(
+  operation: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A, hasError: Boolean) -> Unit
 ) {
   val iterator = iterator()
   val firstError = attempt {
     for (item in iterator) {
-      accumulate(item, transform(RaiseAccumulate(given()), given(), item))
+      operation(RaiseAccumulate(given()), given(), item, false)
     }
     return
   }
@@ -586,7 +580,7 @@ internal inline fun <Error, A, B> Iterable<A>.mapOrAccumulateTo(
     addAll(firstError)
     iterator.forEach { item ->
       attempt {
-        transform(RaiseAccumulate(given()), given(), item)
+        operation(RaiseAccumulate(given()), given(), item, true)
         return@forEach
       }.let(::addAll)
     }
@@ -613,11 +607,10 @@ public inline fun <Error, A, B> Iterable<A>.mapOrAccumulate(
   combine: (Error, Error) -> Error,
   transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
 ): List<B> = buildList(collectionSizeOrDefault(10)) {
-  mapOrAccumulateTo(
-    { _, item -> add(item) },
-    combine,
-    transform
-  )
+  this@mapOrAccumulate.forEachAccumulating(combine) { item, hasError ->
+    val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
+    if (!hasError) add(transformed)
+  }
 }
 
 /**
@@ -632,10 +625,10 @@ context(Raise<NonEmptyList<Error>>)
 public inline fun <Error, A, B> Iterable<A>.mapOrAccumulate(
   transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
 ): List<B> = buildList(collectionSizeOrDefault(10)) {
-  this@mapOrAccumulate.mapOrAccumulateTo(
-    { _, item -> add(item) },
-    transform
-  )
+  this@mapOrAccumulate.forEachAccumulating { item, hasError ->
+    val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
+    if (!hasError) add(transformed)
+  }
 }
 
 /**
@@ -663,10 +656,10 @@ context(Raise<NonEmptyList<Error>>)
 public inline fun <Error, A, B> NonEmptySet<A>.mapOrAccumulate(
   transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
 ): NonEmptySet<B> = buildSet(size) {
-  this@mapOrAccumulate.mapOrAccumulateTo(
-    { _, item -> add(item) },
-    transform
-  )
+  this@mapOrAccumulate.forEachAccumulating { item, hasError ->
+    val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
+    if (!hasError) add(transformed)
+  }
 }.toNonEmptySetOrNull()!!
 
 context(Raise<NonEmptyList<Error>>)
@@ -674,10 +667,10 @@ context(Raise<NonEmptyList<Error>>)
 public inline fun <K, Error, A, B> Map<K, A>.mapOrAccumulate(
   transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (Map.Entry<K, A>) -> B
 ): Map<K, B> = buildMap(size) {
-  this@mapOrAccumulate.entries.mapOrAccumulateTo(
-    { (key, _), item -> put(key, item) },
-    transform
-  )
+  this@mapOrAccumulate.entries.forEachAccumulating { item, hasError ->
+    val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
+    if (!hasError) put(item.key, transformed)
+  }
 }
 
 context(Raise<NonEmptyList<Error>>)

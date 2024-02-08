@@ -14,58 +14,63 @@ import kotlin.contracts.contract
  */
 @PublishedApi
 internal object EmptyValue {
-  @Suppress("UNCHECKED_CAST")
-  fun <A> unbox(value: Any?): A =
-    fold(value, { null as A }, ::identity)
+    @Suppress("UNCHECKED_CAST")
+    fun <A> unbox(value: Any?): A =
+        fold(value, { null as A }, ::identity)
 
-  inline fun <T> combine(first: Any?, second: T, combine: (T, T) -> T): T =
-    fold(first, { second }, { t: T -> combine(t, second) })
+    inline fun <T> combine(first: Any?, second: T, combine: (T, T) -> T): T =
+        fold(first, { second }, { t: T -> combine(t, second) })
 
-  @Suppress("UNCHECKED_CAST")
-  inline fun <T, R> fold(value: Any?, ifEmpty: () -> R, ifNotEmpty: (T) -> R): R {
-    contract {
-      callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
-      callsInPlace(ifNotEmpty, InvocationKind.AT_MOST_ONCE)
+    @Suppress("UNCHECKED_CAST")
+    inline fun <T, R> fold(value: Any?, ifEmpty: () -> R, ifNotEmpty: (T) -> R): R {
+        contract {
+            callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
+            callsInPlace(ifNotEmpty, InvocationKind.AT_MOST_ONCE)
+        }
+        return if (value === EmptyValue) ifEmpty() else ifNotEmpty(value as T)
     }
-    return if (value === EmptyValue) ifEmpty() else ifNotEmpty(value as T)
-  }
 
-  inline fun <T> unboxOrElse(value: Any?, ifEmpty: () -> T): T {
-    contract {
-      callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
+    inline fun <T> unboxOrElse(value: Any?, ifEmpty: () -> T): T {
+        contract {
+            callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
+        }
+        return fold(value, ifEmpty, ::identity)
     }
-    return fold(value, ifEmpty, ::identity)
-  }
 }
 
 @PublishedApi
 internal class FailureValue(val error: Any?) {
-  companion object {
-    @Suppress("UNCHECKED_CAST")
-    inline fun <E, T, R> fold(value: Any?, ifEmpty: (E) -> R, ifNotEmpty: (T) -> R): R {
-      contract {
-        callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
-        callsInPlace(ifNotEmpty, InvocationKind.AT_MOST_ONCE)
-      }
-      return if (value is FailureValue) ifEmpty(value.error as E) else ifNotEmpty(value as T)
-    }
+    companion object {
+        @Suppress("UNCHECKED_CAST")
+        inline fun <E, T, R> fold(value: Any?, ifEmpty: (E) -> R, ifNotEmpty: (T) -> R): R {
+            contract {
+                callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
+                callsInPlace(ifNotEmpty, InvocationKind.AT_MOST_ONCE)
+            }
+            return if (value is FailureValue) ifEmpty(value.error as E) else ifNotEmpty(value as T)
+        }
 
-    inline fun <E, T> unboxOrElse(value: Any?, ifEmpty: (E) -> T): T {
-      contract {
-        callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
-      }
-      return fold(value, ifEmpty, ::identity)
-    }
+        inline fun <E, T> unboxOrElse(value: Any?, ifEmpty: (E) -> T): T {
+            contract {
+                callsInPlace(ifEmpty, InvocationKind.AT_MOST_ONCE)
+            }
+            return fold(value, ifEmpty, ::identity)
+        }
 
-    context(Raise<E>)
-    fun <E, T> bind(value: Any?): T =
-      unboxOrElse<E, T>(value) { raise(it) }
+        context(Raise<E>)
+        fun <E, T> bind(
+            value: Any?,
+        ): T =
+            unboxOrElse<E, T>(value) { raise(it) }
 
-    inline fun <E, T> maybeFailure(block: context(Raise<E>) () -> T): Any? {
-      contract {
-        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-      }
-      return recover(block, ::FailureValue)
+        inline fun <E, T> maybeFailure(
+            block: context(Raise<E>)
+            () -> T,
+        ): Any? {
+            contract {
+                callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+            }
+            return recover(block, ::FailureValue)
+        }
     }
-  }
 }

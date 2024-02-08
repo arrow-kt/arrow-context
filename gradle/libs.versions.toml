@@ -3,6 +3,7 @@ kotest = "5.8.0"
 kotlin = "2.0.0-Beta2"
 arrow = "2.0.0-SNAPSHOT"
 coroutines = "1.7.3"
+spotlessVersion = "6.25.0"
 
 [libraries]
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
@@ -17,3 +18,4 @@ kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotlessVersion" }

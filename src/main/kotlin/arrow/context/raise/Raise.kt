@@ -1,13 +1,14 @@
 @file:Suppress("SUBTYPING_BETWEEN_CONTEXT_RECEIVERS")
+
 package arrow.context.raise
 
 import arrow.context.given
 import arrow.core.Either
 import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
-import arrow.core.raise.Raise
 import arrow.core.raise.EagerEffect
 import arrow.core.raise.Effect
+import arrow.core.raise.Raise
 import arrow.core.raise.RaiseDSL
 import arrow.core.raise.merge
 import arrow.core.recover
@@ -87,8 +88,8 @@ public suspend fun <Error, A> Effect<Error, A>.bind(): A = invoke(this@Raise)
 context(Raise<Error>)
 @RaiseDSL
 public fun <Error, A> Either<Error, A>.bind(): A = when (this) {
-  is Either.Left -> raise(value)
-  is Either.Right -> value
+    is Either.Left -> raise(value)
+    is Either.Right -> value
 }
 
 /**
@@ -98,13 +99,12 @@ public fun <Error, A> Either<Error, A>.bind(): A = when (this) {
  */
 context(Raise<Error>)
 public fun <K, Error, A> Map<K, Either<Error, A>>.bindAll(): Map<K, A> =
-  mapValues { (_, a) -> a.bind() }
-
+    mapValues { (_, a) -> a.bind() }
 
 context(Raise<Error>)
 @RaiseDSL
 public fun <Error, A> Iterable<Either<Error, A>>.bindAll(): List<A> =
-  map { it.bind() }
+    map { it.bind() }
 
 /**
  * Extracts all the values in the [NonEmptyList], raising every [Either.Left]
@@ -114,7 +114,7 @@ public fun <Error, A> Iterable<Either<Error, A>>.bindAll(): List<A> =
 context(Raise<Error>)
 @RaiseDSL
 public fun <Error, A> NonEmptyList<Either<Error, A>>.bindAll(): NonEmptyList<A> =
-  map { it.bind() }
+    map { it.bind() }
 
 /**
  * Extracts all the values in the [NonEmptySet], raising every [Either.Left]
@@ -124,16 +124,18 @@ public fun <Error, A> NonEmptyList<Either<Error, A>>.bindAll(): NonEmptyList<A> 
 context(Raise<Error>)
 @RaiseDSL
 public fun <Error, A> NonEmptySet<Either<Error, A>>.bindAll(): NonEmptySet<A> =
-  map { it.bind() }.toNonEmptySet()
-
+    map { it.bind() }.toNonEmptySet()
 
 // here temporarily until it's in Arrow
 @RaiseDSL
-public inline fun <Error> attempt(block: context(Raise<Error>) () -> Nothing): Error {
-  contract {
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  return merge(block)
+public inline fun <Error> attempt(
+    block: context(Raise<Error>)
+    () -> Nothing,
+): Error {
+    contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
+    return merge(block)
 }
 
 /**
@@ -203,20 +205,20 @@ context(Raise<Error>)
 @RaiseDSL
 @OverloadResolutionByLambdaReturnType
 public inline fun <Error> ensure(condition: Boolean, raise: () -> Error) {
-  contract {
-    callsInPlace(raise, InvocationKind.AT_MOST_ONCE)
-    returns() implies condition
-  }
-  return if (condition) Unit else raise(raise())
+    contract {
+        callsInPlace(raise, InvocationKind.AT_MOST_ONCE)
+        returns() implies condition
+    }
+    return if (condition) Unit else raise(raise())
 }
 
 @RaiseDSL
 public inline fun ensure(condition: Boolean, raise: () -> Nothing) {
-  contract {
-    callsInPlace(raise, InvocationKind.AT_MOST_ONCE)
-    returns() implies condition
-  }
-  return if (condition) Unit else raise()
+    contract {
+        callsInPlace(raise, InvocationKind.AT_MOST_ONCE)
+        returns() implies condition
+    }
+    return if (condition) Unit else raise()
 }
 
 /**
@@ -261,20 +263,20 @@ context(Raise<Error>)
 @RaiseDSL
 @OverloadResolutionByLambdaReturnType
 public inline fun <Error, B : Any> ensureNotNull(value: B?, raise: () -> Error): B {
-  contract {
-    callsInPlace(raise, InvocationKind.AT_MOST_ONCE)
-    returns() implies (value != null)
-  }
-  return value ?: raise(raise())
+    contract {
+        callsInPlace(raise, InvocationKind.AT_MOST_ONCE)
+        returns() implies (value != null)
+    }
+    return value ?: raise(raise())
 }
 
 @RaiseDSL
 public inline fun <B : Any> ensureNotNull(value: B?, raise: () -> Nothing): B {
-  contract {
-    callsInPlace(raise, InvocationKind.AT_MOST_ONCE)
-    returns() implies (value != null)
-  }
-  return value ?: raise()
+    contract {
+        callsInPlace(raise, InvocationKind.AT_MOST_ONCE)
+        returns() implies (value != null)
+    }
+    return value ?: raise()
 }
 
 /**
@@ -302,258 +304,268 @@ public inline fun <B : Any> ensureNotNull(value: B?, raise: () -> Nothing): B {
 context(Raise<Error>)
 @RaiseDSL
 public inline fun <Error, OtherError, A> withError(
-  transform: (OtherError) -> Error,
-  block: context(Raise<OtherError>) () -> A
+    transform: (OtherError) -> Error,
+    block: context(Raise<OtherError>)
+    () -> A,
 ): A {
-  contract {
-    callsInPlace(transform, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  val error = attempt { return block(given<Raise<OtherError>>()) }
-  raise(transform(error))
+    contract {
+        callsInPlace(transform, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
+    val error = attempt { return block(given<Raise<OtherError>>()) }
+    raise(transform(error))
 }
 
 context(Raise<OriginalError>)
 @RaiseDSL
 public inline fun <OriginalError, Error1, Error2, R> withError(
-  transform1: (Error1) -> OriginalError,
-  transform2: (Error2) -> OriginalError,
-  block: context(Raise<Error1>, Raise<Error2>) () -> R
+    transform1: (Error1) -> OriginalError,
+    transform2: (Error2) -> OriginalError,
+    block: context(Raise<Error1>, Raise<Error2>)
+    () -> R,
 ): R {
-  contract {
-    callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  return withError(transform1) {
-    withError<OriginalError, Error2, R>(transform2) {
-      block(given<Raise<Error1>>(), given<Raise<Error2>>())
+    contract {
+        callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
-  }
+    return withError(transform1) {
+        withError<OriginalError, Error2, R>(transform2) {
+            block(given<Raise<Error1>>(), given<Raise<Error2>>())
+        }
+    }
 }
 
 context(Raise<OriginalError>)
 @RaiseDSL
 public inline fun <OriginalError, Error1, Error2, Error3, R> withError(
-  transform1: (Error1) -> OriginalError,
-  transform2: (Error2) -> OriginalError,
-  transform3: (Error3) -> OriginalError,
-  block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>) () -> R
+    transform1: (Error1) -> OriginalError,
+    transform2: (Error2) -> OriginalError,
+    transform3: (Error3) -> OriginalError,
+    block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>)
+    () -> R,
 ): R {
-  contract {
-    callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  return withError(transform1, transform2) {
-    withError<OriginalError, Error3, R>(transform3) {
-      block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>())
+    contract {
+        callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
-  }
+    return withError(transform1, transform2) {
+        withError<OriginalError, Error3, R>(transform3) {
+            block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>())
+        }
+    }
 }
 
 context(Raise<OriginalError>)
 @RaiseDSL
 public inline fun <OriginalError, Error1, Error2, Error3, Error4, R> withError(
-  transform1: (Error1) -> OriginalError,
-  transform2: (Error2) -> OriginalError,
-  transform3: (Error3) -> OriginalError,
-  transform4: (Error4) -> OriginalError,
-  block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>) () -> R
+    transform1: (Error1) -> OriginalError,
+    transform2: (Error2) -> OriginalError,
+    transform3: (Error3) -> OriginalError,
+    transform4: (Error4) -> OriginalError,
+    block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>)
+    () -> R,
 ): R {
-  contract {
-    callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  return withError(transform1, transform2, transform3) {
-    withError<OriginalError, Error4, R>(transform4) {
-      block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>())
+    contract {
+        callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
-  }
+    return withError(transform1, transform2, transform3) {
+        withError<OriginalError, Error4, R>(transform4) {
+            block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>())
+        }
+    }
 }
 
 context(Raise<OriginalError>)
 @RaiseDSL
 public inline fun <OriginalError, Error1, Error2, Error3, Error4, Error5, R> withError(
-  transform1: (Error1) -> OriginalError,
-  transform2: (Error2) -> OriginalError,
-  transform3: (Error3) -> OriginalError,
-  transform4: (Error4) -> OriginalError,
-  transform5: (Error5) -> OriginalError,
-  block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>) () -> R
+    transform1: (Error1) -> OriginalError,
+    transform2: (Error2) -> OriginalError,
+    transform3: (Error3) -> OriginalError,
+    transform4: (Error4) -> OriginalError,
+    transform5: (Error5) -> OriginalError,
+    block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>)
+    () -> R,
 ): R {
-  contract {
-    callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  return withError(transform1, transform2, transform3, transform4) {
-    withError<OriginalError, Error5, R>(transform5) {
-      block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>())
+    contract {
+        callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
-  }
+    return withError(transform1, transform2, transform3, transform4) {
+        withError<OriginalError, Error5, R>(transform5) {
+            block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>())
+        }
+    }
 }
 
 context(Raise<OriginalError>)
 @RaiseDSL
 public inline fun <OriginalError, Error1, Error2, Error3, Error4, Error5, Error6, R> withError(
-  transform1: (Error1) -> OriginalError,
-  transform2: (Error2) -> OriginalError,
-  transform3: (Error3) -> OriginalError,
-  transform4: (Error4) -> OriginalError,
-  transform5: (Error5) -> OriginalError,
-  transform6: (Error6) -> OriginalError,
-  block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>, Raise<Error6>) () -> R
+    transform1: (Error1) -> OriginalError,
+    transform2: (Error2) -> OriginalError,
+    transform3: (Error3) -> OriginalError,
+    transform4: (Error4) -> OriginalError,
+    transform5: (Error5) -> OriginalError,
+    transform6: (Error6) -> OriginalError,
+    block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>, Raise<Error6>)
+    () -> R,
 ): R {
-  contract {
-    callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform6, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  return withError(transform1, transform2, transform3, transform4, transform5) {
-    withError<OriginalError, Error6, R>(transform6) {
-      block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>(), given<Raise<Error6>>())
+    contract {
+        callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform6, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
-  }
+    return withError(transform1, transform2, transform3, transform4, transform5) {
+        withError<OriginalError, Error6, R>(transform6) {
+            block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>(), given<Raise<Error6>>())
+        }
+    }
 }
 
 context(Raise<OriginalError>)
 @RaiseDSL
 public inline fun <OriginalError, Error1, Error2, Error3, Error4, Error5, Error6, Error7, R> withError(
-  transform1: (Error1) -> OriginalError,
-  transform2: (Error2) -> OriginalError,
-  transform3: (Error3) -> OriginalError,
-  transform4: (Error4) -> OriginalError,
-  transform5: (Error5) -> OriginalError,
-  transform6: (Error6) -> OriginalError,
-  transform7: (Error7) -> OriginalError,
-  block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>, Raise<Error6>, Raise<Error7>) () -> R
+    transform1: (Error1) -> OriginalError,
+    transform2: (Error2) -> OriginalError,
+    transform3: (Error3) -> OriginalError,
+    transform4: (Error4) -> OriginalError,
+    transform5: (Error5) -> OriginalError,
+    transform6: (Error6) -> OriginalError,
+    transform7: (Error7) -> OriginalError,
+    block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>, Raise<Error6>, Raise<Error7>)
+    () -> R,
 ): R {
-  contract {
-    callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform6, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform7, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  return withError(transform1, transform2, transform3, transform4, transform5, transform6) {
-    withError<OriginalError, Error7, R>(transform7) {
-      block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>(), given<Raise<Error6>>(), given<Raise<Error7>>())
+    contract {
+        callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform6, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform7, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
-  }
+    return withError(transform1, transform2, transform3, transform4, transform5, transform6) {
+        withError<OriginalError, Error7, R>(transform7) {
+            block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>(), given<Raise<Error6>>(), given<Raise<Error7>>())
+        }
+    }
 }
 
 context(Raise<OriginalError>)
 @RaiseDSL
 public inline fun <OriginalError, Error1, Error2, Error3, Error4, Error5, Error6, Error7, Error8, R> withError(
-  transform1: (Error1) -> OriginalError,
-  transform2: (Error2) -> OriginalError,
-  transform3: (Error3) -> OriginalError,
-  transform4: (Error4) -> OriginalError,
-  transform5: (Error5) -> OriginalError,
-  transform6: (Error6) -> OriginalError,
-  transform7: (Error7) -> OriginalError,
-  transform8: (Error8) -> OriginalError,
-  block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>, Raise<Error6>, Raise<Error7>, Raise<Error8>) () -> R
+    transform1: (Error1) -> OriginalError,
+    transform2: (Error2) -> OriginalError,
+    transform3: (Error3) -> OriginalError,
+    transform4: (Error4) -> OriginalError,
+    transform5: (Error5) -> OriginalError,
+    transform6: (Error6) -> OriginalError,
+    transform7: (Error7) -> OriginalError,
+    transform8: (Error8) -> OriginalError,
+    block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>, Raise<Error6>, Raise<Error7>, Raise<Error8>)
+    () -> R,
 ): R {
-  contract {
-    callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform6, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform7, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform8, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  return withError(transform1, transform2, transform3, transform4, transform5, transform6, transform7) {
-    withError<OriginalError, Error8, R>(transform8) {
-      block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>(), given<Raise<Error6>>(), given<Raise<Error7>>(), given<Raise<Error8>>())
+    contract {
+        callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform6, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform7, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform8, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
-  }
+    return withError(transform1, transform2, transform3, transform4, transform5, transform6, transform7) {
+        withError<OriginalError, Error8, R>(transform8) {
+            block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>(), given<Raise<Error6>>(), given<Raise<Error7>>(), given<Raise<Error8>>())
+        }
+    }
 }
 
 context(Raise<OriginalError>)
 @RaiseDSL
 public inline fun <OriginalError, Error1, Error2, Error3, Error4, Error5, Error6, Error7, Error8, Error9, R> withError(
-  transform1: (Error1) -> OriginalError,
-  transform2: (Error2) -> OriginalError,
-  transform3: (Error3) -> OriginalError,
-  transform4: (Error4) -> OriginalError,
-  transform5: (Error5) -> OriginalError,
-  transform6: (Error6) -> OriginalError,
-  transform7: (Error7) -> OriginalError,
-  transform8: (Error8) -> OriginalError,
-  transform9: (Error9) -> OriginalError,
-  block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>, Raise<Error6>, Raise<Error7>, Raise<Error8>, Raise<Error9>) () -> R
+    transform1: (Error1) -> OriginalError,
+    transform2: (Error2) -> OriginalError,
+    transform3: (Error3) -> OriginalError,
+    transform4: (Error4) -> OriginalError,
+    transform5: (Error5) -> OriginalError,
+    transform6: (Error6) -> OriginalError,
+    transform7: (Error7) -> OriginalError,
+    transform8: (Error8) -> OriginalError,
+    transform9: (Error9) -> OriginalError,
+    block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>, Raise<Error6>, Raise<Error7>, Raise<Error8>, Raise<Error9>)
+    () -> R,
 ): R {
-  contract {
-    callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform6, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform7, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform8, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform9, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  return withError(transform1, transform2, transform3, transform4, transform5, transform6, transform7, transform8) {
-    withError<OriginalError, Error9, R>(transform9) {
-      block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>(), given<Raise<Error6>>(), given<Raise<Error7>>(), given<Raise<Error8>>(), given<Raise<Error9>>())
+    contract {
+        callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform6, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform7, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform8, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform9, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
-  }
+    return withError(transform1, transform2, transform3, transform4, transform5, transform6, transform7, transform8) {
+        withError<OriginalError, Error9, R>(transform9) {
+            block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>(), given<Raise<Error6>>(), given<Raise<Error7>>(), given<Raise<Error8>>(), given<Raise<Error9>>())
+        }
+    }
 }
 
 context(Raise<OriginalError>)
 @RaiseDSL
 public inline fun <OriginalError, Error1, Error2, Error3, Error4, Error5, Error6, Error7, Error8, Error9, Error10, R> withError(
-  transform1: (Error1) -> OriginalError,
-  transform2: (Error2) -> OriginalError,
-  transform3: (Error3) -> OriginalError,
-  transform4: (Error4) -> OriginalError,
-  transform5: (Error5) -> OriginalError,
-  transform6: (Error6) -> OriginalError,
-  transform7: (Error7) -> OriginalError,
-  transform8: (Error8) -> OriginalError,
-  transform9: (Error9) -> OriginalError,
-  transform10: (Error10) -> OriginalError,
-  block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>, Raise<Error6>, Raise<Error7>, Raise<Error8>, Raise<Error9>, Raise<Error10>) () -> R
+    transform1: (Error1) -> OriginalError,
+    transform2: (Error2) -> OriginalError,
+    transform3: (Error3) -> OriginalError,
+    transform4: (Error4) -> OriginalError,
+    transform5: (Error5) -> OriginalError,
+    transform6: (Error6) -> OriginalError,
+    transform7: (Error7) -> OriginalError,
+    transform8: (Error8) -> OriginalError,
+    transform9: (Error9) -> OriginalError,
+    transform10: (Error10) -> OriginalError,
+    block: context(Raise<Error1>, Raise<Error2>, Raise<Error3>, Raise<Error4>, Raise<Error5>, Raise<Error6>, Raise<Error7>, Raise<Error8>, Raise<Error9>, Raise<Error10>)
+    () -> R,
 ): R {
-  contract {
-    callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform6, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform7, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform8, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform9, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(transform10, InvocationKind.AT_MOST_ONCE)
-    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
-  }
-  return withError(transform1, transform2, transform3, transform4, transform5, transform6, transform7, transform8, transform9) {
-    withError<OriginalError, Error10, R>(transform10) {
-      block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>(), given<Raise<Error6>>(), given<Raise<Error7>>(), given<Raise<Error8>>(), given<Raise<Error9>>(), given<Raise<Error10>>())
+    contract {
+        callsInPlace(transform1, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform2, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform3, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform4, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform5, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform6, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform7, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform8, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform9, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(transform10, InvocationKind.AT_MOST_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
-  }
+    return withError(transform1, transform2, transform3, transform4, transform5, transform6, transform7, transform8, transform9) {
+        withError<OriginalError, Error10, R>(transform10) {
+            block(given<Raise<Error1>>(), given<Raise<Error2>>(), given<Raise<Error3>>(), given<Raise<Error4>>(), given<Raise<Error5>>(), given<Raise<Error6>>(), given<Raise<Error7>>(), given<Raise<Error8>>(), given<Raise<Error9>>(), given<Raise<Error10>>())
+        }
+    }
 }
 /*
 

@@ -8,9 +8,14 @@ import arrow.context.EmptyValue.combine
 import arrow.context.EmptyValue.unbox
 import arrow.context.EmptyValue.unboxOrElse
 import arrow.context.given
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.NonEmptyList
+import arrow.core.NonEmptySet
+import arrow.core.nonEmptyListOf
 import arrow.core.raise.Raise
 import arrow.core.raise.RaiseDSL
+import arrow.core.toNonEmptyListOrNull
+import arrow.core.toNonEmptySetOrNull
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind.AT_MOST_ONCE
 import kotlin.contracts.contract
@@ -25,19 +30,22 @@ import kotlin.contracts.contract
 context(Raise<Error>)
 @RaiseDSL
 public inline fun <Error, A, B, C> zipOrAccumulate(
-  combine: (Error, Error) -> Error,
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  block: (A, B) -> C
+    combine: (Error, Error) -> Error,
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    block: (A, B) -> C,
 ): C {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    combine,
-    action1,
-    action2,
-    { }) { a, b, _ ->
-    block(a, b)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        combine,
+        action1,
+        action2,
+        { },
+    ) { a, b, _ ->
+        block(a, b)
+    }
 }
 
 /**
@@ -50,21 +58,25 @@ public inline fun <Error, A, B, C> zipOrAccumulate(
 context(Raise<Error>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D> zipOrAccumulate(
-  combine: (Error, Error) -> Error,
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  block: (A, B, C) -> D
+    combine: (Error, Error) -> Error,
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    block: (A, B, C) -> D,
 ): D {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    combine,
-    action1,
-    action2,
-    action3,
-    { }) { a, b, c, _ ->
-    block(a, b, c)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        combine,
+        action1,
+        action2,
+        action3,
+        { },
+    ) { a, b, c, _ ->
+        block(a, b, c)
+    }
 }
 
 /**
@@ -77,23 +89,28 @@ public inline fun <Error, A, B, C, D> zipOrAccumulate(
 context(Raise<Error>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E> zipOrAccumulate(
-  combine: (Error, Error) -> Error,
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  block: (A, B, C, D) -> E
+    combine: (Error, Error) -> Error,
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    block: (A, B, C, D) -> E,
 ): E {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    combine,
-    action1,
-    action2,
-    action3,
-    action4,
-    { }) { a, b, c, d, _ ->
-    block(a, b, c, d)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        combine,
+        action1,
+        action2,
+        action3,
+        action4,
+        { },
+    ) { a, b, c, d, _ ->
+        block(a, b, c, d)
+    }
 }
 
 /**
@@ -106,25 +123,31 @@ public inline fun <Error, A, B, C, D, E> zipOrAccumulate(
 context(Raise<Error>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F> zipOrAccumulate(
-  combine: (Error, Error) -> Error,
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  block: (A, B, C, D, E) -> F
+    combine: (Error, Error) -> Error,
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    block: (A, B, C, D, E) -> F,
 ): F {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    combine,
-    action1,
-    action2,
-    action3,
-    action4,
-    action5,
-    { }) { a, b, c, d, e, _ ->
-    block(a, b, c, d, e)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        combine,
+        action1,
+        action2,
+        action3,
+        action4,
+        action5,
+        { },
+    ) { a, b, c, d, e, _ ->
+        block(a, b, c, d, e)
+    }
 }
 
 /**
@@ -137,27 +160,34 @@ public inline fun <Error, A, B, C, D, E, F> zipOrAccumulate(
 context(Raise<Error>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F, G> zipOrAccumulate(
-  combine: (Error, Error) -> Error,
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  action6: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> F,
-  block: (A, B, C, D, E, F) -> G
+    combine: (Error, Error) -> Error,
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    action6: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> F,
+    block: (A, B, C, D, E, F) -> G,
 ): G {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    combine,
-    action1,
-    action2,
-    action3,
-    action4,
-    action5,
-    action6,
-    { }) { a, b, c, d, e, f, _ ->
-    block(a, b, c, d, e, f)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        combine,
+        action1,
+        action2,
+        action3,
+        action4,
+        action5,
+        action6,
+        { },
+    ) { a, b, c, d, e, f, _ ->
+        block(a, b, c, d, e, f)
+    }
 }
 
 /**
@@ -170,29 +200,37 @@ public inline fun <Error, A, B, C, D, E, F, G> zipOrAccumulate(
 context(Raise<Error>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F, G, H> zipOrAccumulate(
-  combine: (Error, Error) -> Error,
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  action6: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> F,
-  action7: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> G,
-  block: (A, B, C, D, E, F, G) -> H
+    combine: (Error, Error) -> Error,
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    action6: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> F,
+    action7: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> G,
+    block: (A, B, C, D, E, F, G) -> H,
 ): H {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    combine,
-    action1,
-    action2,
-    action3,
-    action4,
-    action5,
-    action6,
-    action7,
-    { }) { a, b, c, d, e, f, g, _ ->
-    block(a, b, c, d, e, f, g)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        combine,
+        action1,
+        action2,
+        action3,
+        action4,
+        action5,
+        action6,
+        action7,
+        { },
+    ) { a, b, c, d, e, f, g, _ ->
+        block(a, b, c, d, e, f, g)
+    }
 }
 
 /**
@@ -205,31 +243,40 @@ public inline fun <Error, A, B, C, D, E, F, G, H> zipOrAccumulate(
 context(Raise<Error>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F, G, H, I> zipOrAccumulate(
-  combine: (Error, Error) -> Error,
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  action6: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> F,
-  action7: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> G,
-  action8: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> H,
-  block: (A, B, C, D, E, F, G, H) -> I
+    combine: (Error, Error) -> Error,
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    action6: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> F,
+    action7: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> G,
+    action8: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> H,
+    block: (A, B, C, D, E, F, G, H) -> I,
 ): I {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    combine,
-    action1,
-    action2,
-    action3,
-    action4,
-    action5,
-    action6,
-    action7,
-    action8,
-    { }) { a, b, c, d, e, f, g, h, _ ->
-    block(a, b, c, d, e, f, g, h)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        combine,
+        action1,
+        action2,
+        action3,
+        action4,
+        action5,
+        action6,
+        action7,
+        action8,
+        { },
+    ) { a, b, c, d, e, f, g, h, _ ->
+        block(a, b, c, d, e, f, g, h)
+    }
 }
 
 /**
@@ -242,61 +289,79 @@ public inline fun <Error, A, B, C, D, E, F, G, H, I> zipOrAccumulate(
 context(Raise<Error>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F, G, H, I, J> zipOrAccumulate(
-  combine: (Error, Error) -> Error,
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  action6: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> F,
-  action7: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> G,
-  action8: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> H,
-  action9: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> I,
-  block: (A, B, C, D, E, F, G, H, I) -> J
+    combine: (Error, Error) -> Error,
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    action6: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> F,
+    action7: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> G,
+    action8: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> H,
+    action9: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> I,
+    block: (A, B, C, D, E, F, G, H, I) -> J,
 ): J {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  var error: Any? = EmptyValue
-  return zipOrAccumulate(action1, action2, action3, action4, action5, action6, action7, action8, action9, block, {
-    error = combine(error, it.reduce(combine), combine)
-  }) { raise(unbox(error)) }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    var error: Any? = EmptyValue
+    return zipOrAccumulate(action1, action2, action3, action4, action5, action6, action7, action8, action9, block, {
+        error = combine(error, it.reduce(combine), combine)
+    }) { raise(unbox(error)) }
 }
 
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F, G, H, I, J> zipOrAccumulate(
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  action6: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> F,
-  action7: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> G,
-  action8: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> H,
-  action9: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> I,
-  block: (A, B, C, D, E, F, G, H, I) -> J,
-  accumulate: (NonEmptyList<Error>) -> Unit,
-  raise: () -> Nothing
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    action6: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> F,
+    action7: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> G,
+    action8: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> H,
+    action9: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> I,
+    block: (A, B, C, D, E, F, G, H, I) -> J,
+    accumulate: (NonEmptyList<Error>) -> Unit,
+    raise: () -> Nothing,
 ): J {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  val a = valueOrEmpty(action1, accumulate)
-  val b = valueOrEmpty(action2, accumulate)
-  val c = valueOrEmpty(action3, accumulate)
-  val d = valueOrEmpty(action4, accumulate)
-  val e = valueOrEmpty(action5, accumulate)
-  val f = valueOrEmpty(action6, accumulate)
-  val g = valueOrEmpty(action7, accumulate)
-  val h = valueOrEmpty(action8, accumulate)
-  val i = valueOrEmpty(action9, accumulate)
-  return block(
-    unboxOrElse(a, raise),
-    unboxOrElse(b, raise),
-    unboxOrElse(c, raise),
-    unboxOrElse(d, raise),
-    unboxOrElse(e, raise),
-    unboxOrElse(f, raise),
-    unboxOrElse(g, raise),
-    unboxOrElse(h, raise),
-    unboxOrElse(i, raise)
-  )
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    val a = valueOrEmpty(action1, accumulate)
+    val b = valueOrEmpty(action2, accumulate)
+    val c = valueOrEmpty(action3, accumulate)
+    val d = valueOrEmpty(action4, accumulate)
+    val e = valueOrEmpty(action5, accumulate)
+    val f = valueOrEmpty(action6, accumulate)
+    val g = valueOrEmpty(action7, accumulate)
+    val h = valueOrEmpty(action8, accumulate)
+    val i = valueOrEmpty(action9, accumulate)
+    return block(
+        unboxOrElse(a, raise),
+        unboxOrElse(b, raise),
+        unboxOrElse(c, raise),
+        unboxOrElse(d, raise),
+        unboxOrElse(e, raise),
+        unboxOrElse(f, raise),
+        unboxOrElse(g, raise),
+        unboxOrElse(h, raise),
+        unboxOrElse(i, raise),
+    )
 }
 
 /**
@@ -309,17 +374,20 @@ public inline fun <Error, A, B, C, D, E, F, G, H, I, J> zipOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B, C> zipOrAccumulate(
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  block: (A, B) -> C
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    block: (A, B) -> C,
 ): C {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    action1,
-    action2,
-    {}) { a, b, _ ->
-    block(a, b)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        action1,
+        action2,
+        {},
+    ) { a, b, _ ->
+        block(a, b)
+    }
 }
 
 /**
@@ -332,19 +400,23 @@ public inline fun <Error, A, B, C> zipOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D> zipOrAccumulate(
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  block: (A, B, C) -> D
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    block: (A, B, C) -> D,
 ): D {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    action1,
-    action2,
-    action3,
-    {}) { a, b, c, _ ->
-    block(a, b, c)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        action1,
+        action2,
+        action3,
+        {},
+    ) { a, b, c, _ ->
+        block(a, b, c)
+    }
 }
 
 /**
@@ -357,21 +429,26 @@ public inline fun <Error, A, B, C, D> zipOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E> zipOrAccumulate(
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  block: (A, B, C, D) -> E
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    block: (A, B, C, D) -> E,
 ): E {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    action1,
-    action2,
-    action3,
-    action4,
-    {}) { a, b, c, d, _ ->
-    block(a, b, c, d)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        action1,
+        action2,
+        action3,
+        action4,
+        {},
+    ) { a, b, c, d, _ ->
+        block(a, b, c, d)
+    }
 }
 
 /**
@@ -384,23 +461,29 @@ public inline fun <Error, A, B, C, D, E> zipOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F> zipOrAccumulate(
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  block: (A, B, C, D, E) -> F
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    block: (A, B, C, D, E) -> F,
 ): F {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    action1,
-    action2,
-    action3,
-    action4,
-    action5,
-    {}) { a, b, c, d, e, _ ->
-    block(a, b, c, d, e)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        action1,
+        action2,
+        action3,
+        action4,
+        action5,
+        {},
+    ) { a, b, c, d, e, _ ->
+        block(a, b, c, d, e)
+    }
 }
 
 /**
@@ -413,25 +496,32 @@ public inline fun <Error, A, B, C, D, E, F> zipOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F, G> zipOrAccumulate(
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  action6: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> F,
-  block: (A, B, C, D, E, F) -> G
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    action6: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> F,
+    block: (A, B, C, D, E, F) -> G,
 ): G {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    action1,
-    action2,
-    action3,
-    action4,
-    action5,
-    action6,
-    {}) { a, b, c, d, e, f, _ ->
-    block(a, b, c, d, e, f)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        action1,
+        action2,
+        action3,
+        action4,
+        action5,
+        action6,
+        {},
+    ) { a, b, c, d, e, f, _ ->
+        block(a, b, c, d, e, f)
+    }
 }
 
 /**
@@ -444,27 +534,35 @@ public inline fun <Error, A, B, C, D, E, F, G> zipOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F, G, H> zipOrAccumulate(
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  action6: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> F,
-  action7: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> G,
-  block: (A, B, C, D, E, F, G) -> H
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    action6: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> F,
+    action7: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> G,
+    block: (A, B, C, D, E, F, G) -> H,
 ): H {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    action1,
-    action2,
-    action3,
-    action4,
-    action5,
-    action6,
-    action7,
-    {}) { a, b, c, d, e, f, g, _ ->
-    block(a, b, c, d, e, f, g)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        action1,
+        action2,
+        action3,
+        action4,
+        action5,
+        action6,
+        action7,
+        {},
+    ) { a, b, c, d, e, f, g, _ ->
+        block(a, b, c, d, e, f, g)
+    }
 }
 
 /**
@@ -477,29 +575,38 @@ public inline fun <Error, A, B, C, D, E, F, G, H> zipOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F, G, H, I> zipOrAccumulate(
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  action6: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> F,
-  action7: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> G,
-  action8: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> H,
-  block: (A, B, C, D, E, F, G, H) -> I
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    action6: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> F,
+    action7: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> G,
+    action8: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> H,
+    block: (A, B, C, D, E, F, G, H) -> I,
 ): I {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  return zipOrAccumulate(
-    action1,
-    action2,
-    action3,
-    action4,
-    action5,
-    action6,
-    action7,
-    action8,
-    {}) { a, b, c, d, e, f, g, h, _ ->
-    block(a, b, c, d, e, f, g, h)
-  }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    return zipOrAccumulate(
+        action1,
+        action2,
+        action3,
+        action4,
+        action5,
+        action6,
+        action7,
+        action8,
+        {},
+    ) { a, b, c, d, e, f, g, h, _ ->
+        block(a, b, c, d, e, f, g, h)
+    }
 }
 
 /**
@@ -512,86 +619,97 @@ public inline fun <Error, A, B, C, D, E, F, G, H, I> zipOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B, C, D, E, F, G, H, I, J> zipOrAccumulate(
-  action1: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  action2: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> B,
-  action3: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> C,
-  action4: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> D,
-  action5: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> E,
-  action6: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> F,
-  action7: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> G,
-  action8: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> H,
-  action9: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> I,
-  block: (A, B, C, D, E, F, G, H, I) -> J
+    action1: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    action2: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> B,
+    action3: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> C,
+    action4: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> D,
+    action5: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> E,
+    action6: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> F,
+    action7: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> G,
+    action8: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> H,
+    action9: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> I,
+    block: (A, B, C, D, E, F, G, H, I) -> J,
 ): J {
-  contract { callsInPlace(block, AT_MOST_ONCE) }
-  val error: MutableList<Error> = mutableListOf()
-  return zipOrAccumulate(
-    action1,
-    action2,
-    action3,
-    action4,
-    action5,
-    action6,
-    action7,
-    action8,
-    action9,
-    block,
-    error::addAll
-  ) { raise(error.toNonEmptyListOrNull()!!) }
+    contract { callsInPlace(block, AT_MOST_ONCE) }
+    val error: MutableList<Error> = mutableListOf()
+    return zipOrAccumulate(
+        action1,
+        action2,
+        action3,
+        action4,
+        action5,
+        action6,
+        action7,
+        action8,
+        action9,
+        block,
+        error::addAll,
+    ) { raise(error.toNonEmptyListOrNull()!!) }
 }
 
 context(Raise<Error>)
 @RaiseDSL
 @PublishedApi
 internal inline fun <Error, A> Iterable<A>.forEachAccumulating(
-  combine: (Error, Error) -> Error,
-  operation: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A, Boolean) -> Unit
+    combine: (Error, Error) -> Error,
+    operation: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    (A, Boolean) -> Unit,
 ) {
-  val iterator = iterator()
-  val firstError: Error = attempt {
-    for (item in iterator) {
-      operation(RaiseAccumulate(given()), given(), item, false)
-    }
-    return
-  }.reduce(combine)
-  iterator.fold(firstError) { error, item ->
-    val newError = attempt {
-      operation(RaiseAccumulate(given()), given(), item, true)
-      return@fold error
+    val iterator = iterator()
+    val firstError: Error = attempt {
+        for (item in iterator) {
+            operation(RaiseAccumulate(given()), given(), item, false)
+        }
+        return
     }.reduce(combine)
-    combine(error, newError)
-  }.let(::raise)
+    iterator.fold(firstError) { error, item ->
+        val newError = attempt {
+            operation(RaiseAccumulate(given()), given(), item, true)
+            return@fold error
+        }.reduce(combine)
+        combine(error, newError)
+    }.let(::raise)
 }
 
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 @PublishedApi
 internal inline fun <Error, A> Iterable<A>.forEachAccumulating(
-  operation: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A, hasError: Boolean) -> Unit
+    operation: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    (A, hasError: Boolean) -> Unit,
 ) {
-  val iterator = iterator()
-  val firstError = attempt {
-    for (item in iterator) {
-      operation(RaiseAccumulate(given()), given(), item, false)
+    val iterator = iterator()
+    val firstError = attempt {
+        for (item in iterator) {
+            operation(RaiseAccumulate(given()), given(), item, false)
+        }
+        return
     }
-    return
-  }
-  buildList {
-    addAll(firstError)
-    iterator.forEach { item ->
-      attempt {
-        operation(RaiseAccumulate(given()), given(), item, true)
-        return@forEach
-      }.let(::addAll)
-    }
-  }.toNonEmptyListOrNull()!!.let(::raise)
+    buildList {
+        addAll(firstError)
+        iterator.forEach { item ->
+            attempt {
+                operation(RaiseAccumulate(given()), given(), item, true)
+                return@forEach
+            }.let(::addAll)
+        }
+    }.toNonEmptyListOrNull()!!.let(::raise)
 }
 
 @PublishedApi
 internal inline fun <T, R> Iterator<T>.fold(initial: R, operation: (acc: R, T) -> R): R {
-  var accumulator = initial
-  for (element in this) accumulator = operation(accumulator, element)
-  return accumulator
+    var accumulator = initial
+    for (element in this) accumulator = operation(accumulator, element)
+    return accumulator
 }
 
 /**
@@ -604,13 +722,14 @@ internal inline fun <T, R> Iterator<T>.fold(initial: R, operation: (acc: R, T) -
 context(Raise<Error>)
 @RaiseDSL
 public inline fun <Error, A, B> Iterable<A>.mapOrAccumulate(
-  combine: (Error, Error) -> Error,
-  transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
+    combine: (Error, Error) -> Error,
+    transform: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    (A) -> B,
 ): List<B> = buildList(collectionSizeOrDefault(10)) {
-  this@mapOrAccumulate.forEachAccumulating(combine) { item, hasError ->
-    val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
-    if (!hasError) add(transformed)
-  }
+    this@mapOrAccumulate.forEachAccumulating(combine) { item, hasError ->
+        val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
+        if (!hasError) add(transformed)
+    }
 }
 
 /**
@@ -623,12 +742,13 @@ public inline fun <Error, A, B> Iterable<A>.mapOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B> Iterable<A>.mapOrAccumulate(
-  transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
+    transform: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    (A) -> B,
 ): List<B> = buildList(collectionSizeOrDefault(10)) {
-  this@mapOrAccumulate.forEachAccumulating { item, hasError ->
-    val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
-    if (!hasError) add(transformed)
-  }
+    this@mapOrAccumulate.forEachAccumulating { item, hasError ->
+        val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
+        if (!hasError) add(transformed)
+    }
 }
 
 /**
@@ -641,7 +761,8 @@ public inline fun <Error, A, B> Iterable<A>.mapOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B> NonEmptyList<A>.mapOrAccumulate(
-  transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
+    transform: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    (A) -> B,
 ): NonEmptyList<B> = requireNotNull(all.mapOrAccumulate(transform).toNonEmptyListOrNull())
 
 /**
@@ -654,63 +775,66 @@ public inline fun <Error, A, B> NonEmptyList<A>.mapOrAccumulate(
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <Error, A, B> NonEmptySet<A>.mapOrAccumulate(
-  transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (A) -> B
+    transform: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    (A) -> B,
 ): NonEmptySet<B> = buildSet(size) {
-  this@mapOrAccumulate.forEachAccumulating { item, hasError ->
-    val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
-    if (!hasError) add(transformed)
-  }
+    this@mapOrAccumulate.forEachAccumulating { item, hasError ->
+        val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
+        if (!hasError) add(transformed)
+    }
 }.toNonEmptySetOrNull()!!
 
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public inline fun <K, Error, A, B> Map<K, A>.mapOrAccumulate(
-  transform: context(Raise<Error>, Raise<NonEmptyList<Error>>) (Map.Entry<K, A>) -> B
+    transform: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    (Map.Entry<K, A>) -> B,
 ): Map<K, B> = buildMap(size) {
-  this@mapOrAccumulate.entries.forEachAccumulating { item, hasError ->
-    val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
-    if (!hasError) put(item.key, transformed)
-  }
+    this@mapOrAccumulate.entries.forEachAccumulating { item, hasError ->
+        val transformed = transform(given<Raise<Error>>(), given<Raise<NonEmptyList<Error>>>(), item)
+        if (!hasError) put(item.key, transformed)
+    }
 }
 
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public fun <Error, K, A> Map<K, Either<Error, A>>.bindAll(): Map<K, A> =
-  mapOrAccumulate { (_, a) -> a.bind() }
+    mapOrAccumulate { (_, a) -> a.bind() }
 
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public fun <Error, A> Iterable<Either<Error, A>>.bindAll(): List<A> =
-  mapOrAccumulate { it.bind() }
+    mapOrAccumulate { it.bind() }
 
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public fun <Error, A> NonEmptyList<Either<Error, A>>.bindAll(): NonEmptyList<A> =
-  mapOrAccumulate { it.bind() }
+    mapOrAccumulate { it.bind() }
 
 context(Raise<NonEmptyList<Error>>)
 @RaiseDSL
 public fun <Error, A> NonEmptySet<Either<Error, A>>.bindAll(): NonEmptySet<A> =
-  mapOrAccumulate { it.bind() }
+    mapOrAccumulate { it.bind() }
 
 @PublishedApi
 internal class RaiseAccumulate<Error>(raise: Raise<NonEmptyList<Error>>) :
-  TransformingRaise<NonEmptyList<Error>, Error>(raise) {
-  override fun transform(error: Error): NonEmptyList<Error> = nonEmptyListOf(error)
+    TransformingRaise<NonEmptyList<Error>, Error>(raise) {
+    override fun transform(error: Error): NonEmptyList<Error> = nonEmptyListOf(error)
 }
 
 @PublishedApi
 internal inline fun <Error, A> valueOrEmpty(
-  block: context(Raise<Error>, Raise<NonEmptyList<Error>>) () -> A,
-  accumulate: (NonEmptyList<Error>) -> Unit
+    block: context(Raise<Error>, Raise<NonEmptyList<Error>>)
+    () -> A,
+    accumulate: (NonEmptyList<Error>) -> Unit,
 ): Any? {
-  contract {
-    callsInPlace(block, AT_MOST_ONCE)
-  }
-  accumulate(attempt { return block(RaiseAccumulate(given()), given()) })
-  return EmptyValue
+    contract {
+        callsInPlace(block, AT_MOST_ONCE)
+    }
+    accumulate(attempt { return block(RaiseAccumulate(given()), given()) })
+    return EmptyValue
 }
 
 @PublishedApi
 internal fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int =
-  if (this is Collection<*>) this.size else default
+    if (this is Collection<*>) this.size else default

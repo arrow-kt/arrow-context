@@ -1,10 +1,19 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
-plugins { alias(libs.plugins.kotlin.jvm) }
+plugins {
+  alias(libs.plugins.kotlin.jvm)
+  alias(libs.plugins.spotless)
+}
 
 group = "io.arrow-kt"
 
 version = "1.0-SNAPSHOT"
+
+spotless {
+  kotlin {
+    ktlint().editorConfigOverride(mapOf("ktlint_standard_filename" to "disabled"))
+  }
+}
 
 repositories {
   mavenCentral()
